@@ -3,16 +3,13 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef struct {
-  char *data;
-  size_t i;
-}String;
+#define maxstacksize 1024
+#define maxprogramcap 1024
 
 typedef struct {
-  String *str;
-  size_t p;
-  size_t item_count;
-}StrP;
+  char *data;
+  size_t count;
+}String;
 
 typedef enum {
   OK,
@@ -36,9 +33,12 @@ typedef struct {
 
 typedef struct {
   unsigned char *memory;
-  int *stack;
-  int sp;
-  int ip;
+  int stack[maxstacksize];
+  int sp; // stack pointer
+  int ip; // instruction pointer
+
+  inst program[maxprogramcap];
+  int programsize;
 
   bool running;
 }VirtualMachine;
