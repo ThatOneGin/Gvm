@@ -12,6 +12,8 @@
 #define instdiv (inst){.kind = divi}
 #define instmul (inst){.kind = mul}
 #define insthalt (inst){.kind = halt}
+#define instdup (inst){.kind = dup}
+#define instjmp(addr) (inst){.kind = jmp, .op = (value)}
 #define instprint (inst){.kind = print}
 
 VirtualMachine alloc_vm() {
@@ -61,8 +63,15 @@ Trap run_inst(VirtualMachine *vm, inst i) {
     break;
   }
   case print:
-    printf("%d\n", vm->stack[vm->sp-1]); // don't pop it to use later
+    printf("%d\n", vm->stack[vm->sp-1]);
     break;
+  case jmp:
+    vm->ip = i.op;
+    break;
+  case dup:
+  vm->stack[vm->sp] = vm->stack[vm->sp-1];
+  vm->sp += 1;
+  break;
   default:
     return OpNotRec;
   }
@@ -78,12 +87,17 @@ void err(char *msg, int level, bool _exit) {
 }
 
 void run_program(VirtualMachine *vm, inst *program) {
+  int sec_c = 0;
   while (vm->running) {
+    if (sec_c > 30) {
+      break;
+    }
     Trap out = run_inst(vm, program[vm->ip]);
     if (out == OpNotRec) {
       err("Operand not recognized", 2, true);
     }
     vm->ip += 1;
+    sec_c += 1;
   }
 }
 
@@ -136,7 +150,6 @@ inst *read_file(char *filename) {
   inst instruction;
   for (size_t i  = 0; i < c; i++) {
     fread(&instruction, sizeof(inst), 1, f);
-    printf("%d %d\n", instruction.kind, instruction.op);
     program[i] = instruction;
   }
 
@@ -242,6 +255,14 @@ inst parse_line(String ln) {
   } else if (s_cmp(i_n, c_str("halt"))) {
     ln = trim_l(ln);
     return (inst) {.kind = halt};
+  } else if (s_cmp(i_n, c_str("jmp"))) {
+    ln = trim_l(ln);
+    int op = s_atoi(trim_l(ln));
+
+    return (inst){.kind = jmp, .op = op};
+  } else if (s_cmp(i_n, c_str("dup"))) {
+    ln = trim_l(ln);
+    return (inst){.kind = dup};
   } else {
     printf("unknown instruction %s", i_n.data);
     exit(1);
@@ -261,7 +282,7 @@ String file_to_str(char *filepath) {
   }
 
   size_t sz = ftell(f);
-  if (sz < 0) {
+  if (sz <= 0) {
     printf("Could not read input file.\n");
     exit(1);
     exit(1);

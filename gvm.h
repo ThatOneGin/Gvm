@@ -26,7 +26,9 @@ typedef struct {
     mul,
     sub,
     divi,
-    print
+    print,
+    jmp,
+    dup
   }kind;
   int op;
 }inst;
