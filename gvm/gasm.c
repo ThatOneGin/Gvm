@@ -11,5 +11,6 @@ int main(int argc, char **argv) {
 
   vm.programsize = parse_src(code, vm.program, maxprogramcap);
   write_file(vm.program, vm.programsize);
+  free(code.data);
   return 0;
 }
