@@ -1,31 +1,36 @@
+#include "dump_ast.c"
 #include "lex.c"
 #include "parser.c"
 #include "parser.h"
 #include "gen.c"
 #include "../gvm/gvm.h"
+#include <stdio.h>
 
 char *openfile(char *filename) {
-  char * buffer = 0;
-  long length;
-  FILE * f = fopen (filename, "rb");
-
-  if (f) {
-    fseek (f, 0, SEEK_END);
-    length = ftell (f);
-    fseek (f, 0, SEEK_SET);
-    buffer = malloc(length);
-    if (buffer) {
-      fread (buffer, 1, length, f);
-    }
-    fclose (f);
-  }
-
-  if (buffer) {
-    return buffer;
-  } else {
-    printf("Couldn't open file due to memory allocation issue. Exiting.\n");
+  FILE *f = fopen(filename, "r");
+  if (f == NULL) {
+    perror("Error opening file");
     exit(1);
   }
+
+  fseek(f, 0, SEEK_END);
+  long f_size = ftell(f);
+  fseek(f, 0, SEEK_SET);
+
+
+  char *buffer = (char *)malloc(f_size + 1);
+  if (buffer == NULL) {
+    perror("Memory allocation failed");
+    fclose(f);
+    exit(1);
+  }
+
+  fread(buffer, 1, f_size, f);
+
+  buffer[f_size] = '\0';
+
+  fclose(f);
+  return buffer;
 }
 
 int main(int argc, char **argv) {
@@ -43,6 +48,8 @@ int main(int argc, char **argv) {
   evaluate_list(ast);
   append_to_program(insthalt);
   write_file(vm.program, psize);
+
+  dump_ast(ast);
 
   freelist(l);
   free_ast_list(ast);

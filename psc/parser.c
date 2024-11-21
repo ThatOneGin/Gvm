@@ -114,20 +114,20 @@ AstList init_astlist() {
 }
 
 void append_to_astlist(AstList list, Ast_T *a) {
-  /* if (list.size == list.capacity) { */
-  /*   list.data = realloc(list.data, list.size *= 2); */
-  /*   list.capacity *= 2; */
+  if (list.size == list.capacity) { 
+    list.data = realloc(list.data, list.size *= 2); 
+    list.capacity *= 2; 
 
-  /*   if (list.data == NULL) { */
-  /*     printf("Error: memory reallocation failed.\n"); */
-  /*     for (int i = 0; i < list.size; i++) { */
-  /* 	free_ast(list.data[i]); */
-  /*     } */
-  /*     free_ast(a); */
-  /*     free(list.data); */
-  /*     exit(1); */
-  /*   } */
-  /* } */
+    if (list.data == NULL) { 
+      printf("Error: memory reallocation failed.\n"); 
+      for (int i = 0; i < list.size; i++) { 
+  	    free_ast(list.data[i]); 
+      }
+      free_ast(a); 
+      free(list.data); 
+      exit(1); 
+    } 
+  }
   list.data[list.size] = a;
   list.size += 1;
 }
