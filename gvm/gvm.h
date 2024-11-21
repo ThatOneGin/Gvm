@@ -34,6 +34,17 @@ typedef struct {
 }inst;
 
 typedef struct {
+  enum {
+    gen_char,
+    gen_int
+  }gen_type;
+  union {
+    char *str_value;
+    int int_value;
+  }b;
+}Psc_generic;
+
+typedef struct {
   unsigned char *memory;
   int stack[maxstacksize];
   int sp; // stack pointer

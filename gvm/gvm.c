@@ -4,8 +4,9 @@
 #include <ctype.h>
 #include "gvm.h"
 
-#define arr_size(arr) (sizeof((arr)) / sizeof((arr[0])))
+VirtualMachine vm = {0};
 
+#define arr_size(arr) (sizeof((arr)) / sizeof((arr[0])))
 #define instpush(value) (inst){.kind = push, .op = (value)}
 #define instadd (inst){.kind = add}
 #define instsub (inst){.kind = sub}
@@ -328,4 +329,21 @@ size_t parse_src(String source, inst *program, size_t program_capacity) {
 
   return program_size;
 }
-VirtualMachine vm = {0};
+
+static void gvm_push_int(VirtualMachine *vm, int value) {
+  vm->stack[vm->sp] = value;
+  vm->sp += 1;
+}
+static int gvm_pop(VirtualMachine *vm) {
+  assert(vm->sp > 0);
+  return vm->stack[vm->sp-1];
+}
+
+
+//macros to manipulate the stack without having a program
+
+#define psc_gvm_push_int(value) gvm_push_int(&vm, value);
+#define psc_gvm_init()          vm.running = true;
+#define psc_gvm_terminate()     vm.runnint = false;
+#define psc_gvm_gettop()        vm.stack[vm.sp-1];
+#define psc_gvm_pop()           gvm_pop(&vm);
