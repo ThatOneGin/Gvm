@@ -1,7 +1,3 @@
-# Gvm/Psc
+# GVM
 
-### Simple compiler, virtual machine and assembler tools.
-
-* _[Gvm](gvm/README.md)_
-
-* _[Pythar-script](psc/README.md)_
+**Simple header-only virtual machine made in C**

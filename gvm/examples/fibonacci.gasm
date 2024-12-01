@@ -1,5 +1,0 @@
-push 1
-dup
-add
-jmp 1
-halt
