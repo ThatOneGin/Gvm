@@ -27,9 +27,11 @@ typedef struct {
     divi,
     print,
     jmp,
-    dup
+    dup,
+    call
   }kind;
   int op;
+  char *call_label;
 }inst;
 
 //typedef struct {
@@ -44,7 +46,12 @@ typedef struct {
 //}Psc_generic;
 
 typedef struct {
-  unsigned char *memory;
+  char *name;
+  inst *code;
+  int c_size;
+}Label;
+
+typedef struct {
   int stack[maxstacksize];
   int sp; // stack pointer
   int ip; // instruction pointer
@@ -53,6 +60,9 @@ typedef struct {
   int programsize;
 
   bool running;
+  // TODO: more label cap
+  Label label_table[10];
+  int lp; // label pointer
 }VirtualMachine;
 
 VirtualMachine alloc_vm();
@@ -60,8 +70,10 @@ Trap run_inst(VirtualMachine *vm, inst i);
 void err(char *msg, int level, bool _exit);
 void run_program(VirtualMachine *vm, inst *program);
 void dump_stack(VirtualMachine vm);
-void write_file(inst *p, size_t size);
+void write_file(inst *p, size_t size, char *filename);
 inst *read_file(char *filename);
+void push_label(VirtualMachine *v, char *name, inst *code, int size);
+Label look_up_label(VirtualMachine v, char *name);
 #endif
 
 #ifdef GVM_IMPLEMENTATION
@@ -78,6 +90,7 @@ VirtualMachine vm = {0};
 #define instdup (inst){.kind = dup}
 #define instjmp(addr) (inst){.kind = jmp, .op = (value)}
 #define instprint (inst){.kind = print}
+#define instcall(label) (inst){.kind = call, .call_label = label}
 
 VirtualMachine alloc_vm() {
   VirtualMachine vm;
@@ -88,6 +101,7 @@ VirtualMachine alloc_vm() {
 }
 
 Trap run_inst(VirtualMachine *vm, inst i) {
+  Label lbl;
   switch (i.kind) {
   case push: {
     vm->stack[vm->sp] = i.op;
@@ -135,6 +149,12 @@ Trap run_inst(VirtualMachine *vm, inst i) {
   vm->stack[vm->sp] = vm->stack[vm->sp-1];
   vm->sp += 1;
   break;
+  case call:
+    lbl = look_up_label(*vm, i.call_label);
+    for (int j = 0; j <= lbl.c_size; j++) {
+      run_inst(vm, lbl.code[j]);
+    }
+    break;
   default:
     return OpNotRec;
   }
@@ -152,7 +172,8 @@ void err(char *msg, int level, bool _exit) {
 void run_program(VirtualMachine *vm, inst *program) {
   int sec_c = 0;
   while (vm->running) {
-    if (sec_c > 30) {
+    if (sec_c > 2000) {
+      err("Maximum iterations reached.", 3, true);
       break;
     }
     Trap out = run_inst(vm, program[vm->ip]);
@@ -219,5 +240,26 @@ inst *read_file(char *filename) {
   fclose(f);
 
   return program;
+}
+
+void push_label(VirtualMachine *v, char *name, inst *code, int size) {
+  assert(v->lp <= 10);
+  v->label_table[v->lp] = (Label) {
+    .name = name,
+    .code = code,
+    .c_size = size
+  };
+  v->lp += 1;
+}
+
+Label look_up_label(VirtualMachine v, char *name) {
+  for (int i = 0; i < v.lp; i++) {
+    if (strcmp(v.label_table[i].name, name) == 0) {
+      return v.label_table[i];
+    }
+  }
+
+  printf("Couldn't find label named `%s`.\n", name);
+  exit(1);
 }
 #endif
