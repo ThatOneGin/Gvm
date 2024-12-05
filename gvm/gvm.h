@@ -60,12 +60,11 @@ typedef struct {
   int programsize;
 
   bool running;
-  // TODO: more label cap
-  Label label_table[10];
+  Label *label_table;
   int lp; // label pointer
 }VirtualMachine;
 
-VirtualMachine alloc_vm();
+VirtualMachine alloc_vm(VirtualMachine *vm);
 Trap run_inst(VirtualMachine *vm, inst i);
 void err(char *msg, int level, bool _exit);
 void run_program(VirtualMachine *vm, inst *program);
@@ -92,12 +91,12 @@ VirtualMachine vm = {0};
 #define instprint (inst){.kind = print}
 #define instcall(label) (inst){.kind = call, .call_label = label}
 
-VirtualMachine alloc_vm() {
-  VirtualMachine vm;
-  vm.ip = 0;
-  vm.sp = 0;
-  vm.running = false;
-  return vm;
+VirtualMachine alloc_vm(VirtualMachine *vm) {
+  vm->ip = 0;
+  vm->sp = 0;
+  vm->running = false;
+  vm->label_table = calloc(sizeof(Label), 16);
+  return *vm;
 }
 
 Trap run_inst(VirtualMachine *vm, inst i) {
