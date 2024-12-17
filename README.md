@@ -1,3 +1,1 @@
-# GVM
-
-**Simple header-only virtual machine made in C**
+(Project development paused for some time)
