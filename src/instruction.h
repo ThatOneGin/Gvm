@@ -8,7 +8,7 @@ typedef enum {
   mul,
   sub,
   divi,
-  print,
+  shout,
   jmp,
 } insttype;
 

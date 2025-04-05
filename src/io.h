@@ -1,8 +1,11 @@
 #ifndef IO_H
 #define IO_H
 #include "instruction.h"
+#include "string_view.h"
+#include "asm.h"
 #include <stdio.h>
 
-void write_file(inst *p, size_t size, char *filename);
-inst *read_file(char *filename);
+String_view openfile(char *filepath);
+void write_file(Gassembly ga, char *filename);
+Gassembly read_file(char *filename);
 #endif

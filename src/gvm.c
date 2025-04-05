@@ -1,6 +1,9 @@
 #include "gvm.h"
+#include "asm.h"
 #include "instruction.h"
+#include "io.h"
 #include "stack.h"
+#include "string_view.h"
 #include <assert.h>
 #include <stdio.h>
 
@@ -47,24 +50,32 @@ Trap run_inst(VirtualMachine *vm, inst i) {
   } case jmp:
     vm->ip = i.op;
     break;
-  case print: {
+  case shout: {
     decptr(vm->last);
     int entry = diff(vm->last, vm->stack);
-    printf("%ld", vm->stack[entry]);
+    printf("%ld\n", vm->stack[entry]);
     break;
   } case add: {
     assert(diff(vm->last-1, vm->stack) > 0);
     arith(+);
+    break;
   } case sub: {
     assert(diff(vm->last-1, vm->stack) > 0);
     arith(-);
+    break;
   } case divi: {
     assert(diff(vm->last-1, vm->stack) > 0);
     arith(/);
+    break;
   } case mul: {
     assert(diff(vm->last-1, vm->stack) > 0);
     arith(*);
-  } default:
+    break;
+  } case halt:
+    vm->halt = true;
+    break;
+  default:
+    printf("%d\n", i.kind);
     return OpNotRec;
   }
 
@@ -114,11 +125,41 @@ void close_vm(VirtualMachine *vm) {
   vm->halt = true;
 }
 
+void parse_args(char *mode, int argc, char **argv) {
+  if (argc <= 1) {
+    printf("[Error]: usage: %s -asm|-bc input.gvmbc|input.gvm\n", argv[0]);
+    printf("\t-asm for gvm assembly files\n\t-bc for bytecode files.\n");
+    exit(1);
+  }
+  if (str_cmp(to_str(argv[1]), to_str("-asm"))) {
+    *mode = 'r';
+  } else if (str_cmp(to_str(argv[1]), to_str("-bc"))) {
+    *mode = 'w';
+  } else {
+    printf("first flag should be:\n\t-asm for gvm assembly files\n\t-bc for bytecode files.\n");
+    exit(1);
+  }
+}
+
 int main(int argc, char **argv) {
-  assert(argc >= 2);
-  VirtualMachine vm = {0};
-  alloc_vm(&vm);
-  /* TODO: make assembler */
-  close_vm(&vm);
+  char mode;
+  parse_args(&mode, argc, argv);
+
+  if (mode == 'r') {
+    String_view src = openfile(argv[2]);
+    Gassembly ga = new_ga();
+
+    parse_file(src, &ga);
+    write_file(ga, "a.gvmbc");
+    
+    free(src.data);
+    src.size = 0;
+  } else {
+    Gassembly ga = read_file(argv[2]);
+    VirtualMachine vm = {0};
+    alloc_vm(&vm);
+    run_program(&vm, ga.p);
+    close_vm(&vm);
+  }
   return 0;
 }

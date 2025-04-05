@@ -24,9 +24,6 @@ typedef struct {
   Stack stack; /* stack base */
   Stack last; /* first free element */
   Stack top; /* last element */
-
-  inst program[maxprogramcap];
-  int programsize;
   int ip;
 
   bool halt;
